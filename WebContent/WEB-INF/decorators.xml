@@ -1,0 +1,8 @@
+<decorators defaultdir="/WEB-INF/decorators">
+	<excludes>
+		 <pattern>/login.joy</pattern>
+	</excludes>
+	<decorator name="common" page="common.dec">
+		<pattern>/main.joy</pattern>	
+	</decorator>
+</decorators>

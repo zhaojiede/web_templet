@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.template.web.test">
+	
+	
+	<select id="selectList" parameterType="String" resultType="Integer">
+		select count(*) from tbMerchantStat where UserID = #{userID}
+	</select>
+	
+	<select id="selectTrade" parameterType="map" resultType="Integer">
+		select count(*) from tb_trade
+		where create_dts <![CDATA[>=]]> #{fromDts}
+		and create_dts <![CDATA[<=]]> #{toDts}
+		order by create_dts,trade_type, trade_comment_cd
+	</select>
+	
+	<insert id="insertTrade" parameterType="map" >
+		insert into tb_trade_new
+              (trade_id, trade_type, account_id, loan_id, dyh_id, repay_id, credit_id, input_amt, output_amt, channel_trade_id, trade_comment_cd, del_yn, plat_form, create_id, create_dts, update_id, update_dts, device )
+        select trade_id, trade_type, account_id, loan_id, dyh_id, repay_id, credit_id, input_amt, output_amt, channel_trade_id, trade_comment_cd, del_yn, plat_form, create_id, create_dts, update_id, update_dts, device
+        from tb_trade
+        where create_dts <![CDATA[>=]]> #{fromDts}
+		and create_dts <![CDATA[<=]]> #{toDts}
+        order by create_dts,trade_type, trade_comment_cd
+	</insert>
+	
+	<select id="getCreditList" parameterType="param"  resultType="credit" >
+		select a.credit_no  as creditNo,a.credit_id creditId, a.user_id userId, a.credit_status creditStatus,
+		       a.origin_amt originAmt,
+		       a.remain_amt remainAmt,
+		      (select substring(lend_dts,1,8) from tb_loan where loan_id = a.loan_id) lendDt,
+		       case when a.from_credit_id is not null then substring(a.create_dts,1,8)
+		            else (select substring(lend_dts,1,8) from tb_loan where loan_id = a.loan_id)
+		       end as startDt,
+		       ifnull(b.prepayment_dt,b.repay_dt) endDt,
+		       b.repay_dt repayDt,
+		       (b.realpay_origin_amt+b.realpay_prepayment_origin_amt) repayOriginAmt
+		From tb_credit a,tb_credit_repay b
+		where a.credit_id = b.credit_id
+		and a.credit_no between #{scn} and #{ecn}
+		and b.repay_status not in ('REPAYSTAT04')
+		order by a.credit_no, b.repay_dt
+	</select>
+</mapper>
